@@ -1,112 +1,108 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import Card from '../components/Card';
 
 function Home() {
+  const [token, setToken] = useState(localStorage.getItem('token'));
   const [products, setProducts] = useState([]);
-  const nameRef = useRef(null);
-  const priceRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+
+  const nameRef = useRef();
+  const priceRef = useRef();
+  const descriptionRef = useRef();
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    setLoading(true); // Yuklashni ko'rsatish
+    fetch(`${import.meta.env.VITE_API_URL}/products/private/all`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json' 
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      setProducts(data); // Barcha mahsulotlarni o'rnatish
+      setLoading(false); // Yuklashni to'xtatish
+    })
+    .catch(error => {
+      console.error("Error fetching products:", error);
+      setLoading(false); // Xatolik bo'lganda yuklashni to'xtatish
+    });
+  }, [token]);
 
-  const fetchProducts = () => {
-    fetch('https://auth-rg69.onrender.com/api/products/private/all')
-      .then(response => {
-        if (response.status == 200) {
-          return response.json();
-        } else {
-          throw new Error(`HTTP error! status: ${response.status}`);
+  function handleDelete(id) {
+    let isConfirmed = window.confirm("Rostdan ham o'chirmoqchimisiz?"); 
+    if (isConfirmed) {
+      fetch(`${import.meta.env.VITE_API_URL}/products/private/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
       })
+      .then(response => response.json())
       .then(data => {
-        setProducts(data);
+        if (data.message === "Mahsulot muvaffaqiyatli o'chirildi!") { 
+          let copied = [...products];
+          copied = copied.filter(cop => cop.id !== id); 
+          setProducts(copied);
+        }
       })
       .catch(error => {
-        console.error('Maxsulotlarni olishda xatolik:', error);
+        console.error("Error deleting product:", error);
       });
-  };
+    }
+  }
 
-  const createProduct = (e) => {
-    e.preventDefault();
-    const newProduct = {
-      name: nameRef.current.value,
-      price: priceRef.current.value
+  function handleSave(event) {
+    event.preventDefault();
+    const create = {
+      "name": nameRef.current.value,
+      "price": priceRef.current.value,
+      "description": descriptionRef.current.value,
+      "status": "active",
+      "category_id": 1 // kerakli category_id qiymatini bu yerga qo'shing
     };
-    fetch('https://auth-rg69.onrender.com/api/products/private', {
+
+    fetch(`${import.meta.env.VITE_API_URL}/products/private`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(newProduct),
+      body: JSON.stringify(create)
     })
-      .then(response => {
-        if (response.status >= 200 && response.status < 300) {
-          return response.json();
-        } else {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-      })
-      .then(() => {
+    .then(response => response.json())
+    .then(data => {
+      if (data.id) {
+        setProducts([...products, data]);
         nameRef.current.value = '';
         priceRef.current.value = '';
-        fetchProducts();
-      })
-      .catch(error => {
-        console.error('Maxsulot yaratishda xatolik:', error);
-      });
-  };
-
-  const deleteProduct = (id) => {
-    fetch(`https://auth-rg69.onrender.com/api/products/private/${id}`, {
-      method: 'DELETE',
+        descriptionRef.current.value = '';
+      }
     })
-      .then(response => {
-        if (response.status >= 200 && response.status < 300) {
-          fetchProducts();
-        } else {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-      })
-      .catch(error => {
-        console.error('Maxsulotni o\'chirishda xatolik:', error);
-      });
-  };
+    .catch(error => {
+      console.error("Error creating product:", error);
+    });
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Maxsulotlar</h1>
-      
-      <form onSubmit={createProduct} className="mb-8 flex gap-4">
-        <input
-          type="text"
-          placeholder="Nomi"
-          ref={nameRef}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-          type="number"
-          placeholder="Narxi"
-          ref={priceRef}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button type="submit" className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-          Qo'shish
-        </button>
+    <div>
+      <form className='w-1/3 mt-10 flex flex-col bg-slate-400 p-3 rounded-md gap-4 mx-auto'>
+        <input ref={nameRef} className='p-2 rounded-md border' type="text" placeholder='Enter name ...' />
+        <input ref={priceRef} className='p-2 rounded-md border' type="number" placeholder='Enter price ...' />
+        <textarea ref={descriptionRef} className='p-2 rounded-md border' placeholder='Enter description ...'></textarea>
+        <button onClick={handleSave} className='p-2 rounded-md border bg-blue-600 text-white cursor-pointer'>Create</button>
       </form>
-
-      <ul className="space-y-4">
-        {products.map((product) => (
-          <li key={product._id} className="flex justify-between items-center bg-white p-4 rounded-md shadow">
-            <span className="text-gray-800">{product.name} - {product.price}</span>
-            <button 
-              onClick={() => deleteProduct(product._id)} 
-              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            >
-              O'chirish
-            </button>
-          </li>
-        ))}
-      </ul>
+      <div className='wrapper container mx-auto mt-10 flex flex-wrap gap-2 justify-center'>
+        {loading ? (
+          <p>Yuklanmoqda...</p> // Yuklanayotgan paytda ko'rsatish
+        ) : (
+          products.length > 0 &&
+          products.map((product) => (
+            <Card key={product.id} product={product} onDelete={handleDelete} />
+          ))
+        )}
+      </div>
     </div>
   );
 }

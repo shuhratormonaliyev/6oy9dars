@@ -7,7 +7,7 @@ function Register() {
   const emailRef = useRef();
   const rePasswordRef = useRef();
   const [error, setError] = useState(null);
-  const navigate = useNavigate(); // Navigate funksiyasini import qilamiz
+  const navigate = useNavigate(); 
 
   function validateInputs() {
     const username = usernameRef.current.value.trim();
@@ -52,7 +52,7 @@ function Register() {
         if (data.success) {
           console.log('Success:', data);
           alert('Registration successful. You can now log in.');
-          navigate('/login'); // Ro'yxatdan muvaffaqiyatli o'tgach login sahifasiga o'tkazamiz
+          navigate('/login'); 
         } else {
           setError(data.message || 'Registration failed');
         }

@@ -1,67 +1,50 @@
-import React, { useRef, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, {useRef} from 'react'
+import {useNavigate} from 'react-router-dom'; 
 
 function Login() {
   const usernameRef = useRef();
   const passwordRef = useRef();
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const formRef = useRef();
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    setError(null);
-
-    const userLogin = {
+  function handleLogin(event) {
+    event.preventDefault();
+    
+    const user = {
       username: usernameRef.current.value,
-      password: passwordRef.current.value
+      password: passwordRef.current.value,
     };
 
-    fetch('https://auth-rg69.onrender.com/api/auth/signin', {
+    fetch(`${import.meta.env.VITE_API_URL}/auth/signin`, { 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(userLogin),
+      body: JSON.stringify(user) 
     })
-      .then(response => response.json())
-      .then(data => {
-        if (data.message) {
-          setError(data.message);
-          return;
-        }
-        console.log('Foydalanuvchi muvaffaqiyatli tizimga kirdi');
-        localStorage.setItem('token', data.token);
+    .then(response => response.json())
+    .then(data => {
+      if (data.message === "Invalid Password" || data.message === "User Not found.") {
+        alert(data.message);
+      }
+      if (data.accessToken) {
+        localStorage.setItem('token', data.accessToken);
+        localStorage.setItem('user', JSON.stringify(data));
         navigate('/');
-      })
-      .catch(error => {
-        console.error('Xatolik:', error);
-        setError('Xatolik yuz berdi. Iltimos, keyinroq qayta urinib koring.');
-      });
+        formRef.current.reset();
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
   }
 
   return (
-    <div className='bg-slate-400 min-h-screen flex justify-center items-center'>
-      <form onSubmit={handleSubmit} className='bg-white p-6 rounded-lg shadow-md space-y-4'>
-        {error && <p className='text-red-500'>{error}</p>}
-        <input
-          type='text'
-          ref={usernameRef}
-          placeholder='Foydalanuvchi nomini kiriting ...'
-          className='w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400'
-        />
-        <input
-          type='password'
-          ref={passwordRef}
-          placeholder='Parolni kiriting ...'
-          className='w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400'
-        />
-        <button
-          type='submit'
-          className='w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300'
-        >
-          Login 
-        </button>
-        <Link to="/register" className="text-blue-500 hover:underline mt-3">Ro'yxatdan o'tish</Link>
+    <div>
+      <form ref={formRef} className="flex w-1/3 flex-col gap-5 bg-slate-400 mx-auto p-4 rounded-md mt-7" onSubmit={handleLogin}>
+        <input className="p-2 rounded border" ref={usernameRef} type="text" placeholder="Enter username ..." />
+        <input className="p-2 rounded border" ref={passwordRef} type="password" placeholder="Enter password ..." />
+        <button className="p-2 rounded border bg-blue-700" type="submit">Login</button>
       </form>
     </div>
   );
