@@ -8,7 +8,7 @@ import MainLayout from './components/layout/MainLayout';
 import Details from './components/Details';
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('token')); // Tugatish belgisi to'g'rilandi
+  const [token, setToken] = useState(localStorage.getItem('token'));
   const navigate = useNavigate();
 
   function PrivateRoute({ isAuth, children }) {

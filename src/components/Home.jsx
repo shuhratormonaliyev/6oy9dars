@@ -11,7 +11,7 @@ function Home() {
   const descriptionRef = useRef();
 
   useEffect(() => {
-    setLoading(true); // Yuklashni ko'rsatish
+    setLoading(true);
     fetch(`${import.meta.env.VITE_API_URL}/products/private/all`, {
       method: 'GET',
       headers: {
@@ -21,12 +21,12 @@ function Home() {
     })
     .then(response => response.json())
     .then(data => {
-      setProducts(data); // Barcha mahsulotlarni o'rnatish
-      setLoading(false); // Yuklashni to'xtatish
+      setProducts(data);
+      setLoading(false); 
     })
     .catch(error => {
       console.error("Error fetching products:", error);
-      setLoading(false); // Xatolik bo'lganda yuklashni to'xtatish
+      setLoading(false);
     });
   }, [token]);
 
@@ -60,7 +60,7 @@ function Home() {
       "price": priceRef.current.value,
       "description": descriptionRef.current.value,
       "status": "active",
-      "category_id": 1 // kerakli category_id qiymatini bu yerga qo'shing
+      "category_id": 1 
     };
 
     fetch(`${import.meta.env.VITE_API_URL}/products/private`, {
@@ -95,7 +95,7 @@ function Home() {
       </form>
       <div className='wrapper container mx-auto mt-10 flex flex-wrap gap-2 justify-center'>
         {loading ? (
-          <p>Yuklanmoqda...</p> // Yuklanayotgan paytda ko'rsatish
+          <p>Yuklanmoqda...</p>
         ) : (
           products.length > 0 &&
           products.map((product) => (
